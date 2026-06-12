@@ -418,21 +418,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "delego-marketplace"
-version = "0.0.1"
-dependencies = [
- "soroban-sdk",
-]
-
-[[package]]
 name = "delego-permissions"
-version = "0.0.1"
-dependencies = [
- "soroban-sdk",
-]
-
-[[package]]
-name = "delego-reputation"
 version = "0.0.1"
 dependencies = [
  "soroban-sdk",
