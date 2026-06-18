@@ -1,4 +1,4 @@
-# Services
+# Backend Services
 
 This directory contains the backend microservices that power the Delego platform. Each service is independently deployable and exposes a health check endpoint.
 
@@ -14,7 +14,7 @@ This directory contains the backend microservices that power the Delego platform
 
 ## Overview
 
-The services directory contains backend microservices that implement the core business logic of the Delego platform. Each service is designed to be:
+The backend services directory contains microservices that implement the core business logic of the Delego platform. Each service is designed to be:
 
 - **Independent**: Can be developed and deployed independently
 - **Scalable**: Can scale horizontally based on demand
@@ -32,7 +32,7 @@ The services directory contains backend microservices that implement the core bu
 
 ## Services
 
-### Gateway Service (`services/gateway`)
+### Gateway Service (`apps/backend/gateway`)
 
 **Package**: `@delego/gateway`
 **Port**: 3000
@@ -69,7 +69,7 @@ The API gateway serves as the single entry point for all client requests.
 - `GET /api/v1/orders` - List orders
 - `POST /api/v1/orders` - Create order
 
-### Orchestrator Service (`services/orchestrator`)
+### Orchestrator Service (`apps/backend/orchestrator`)
 
 **Package**: `@delego/orchestrator`
 **Port**: 3010
@@ -108,39 +108,7 @@ The orchestrator service coordinates purchase workflows across multiple services
 - Event bus (Redis Pub/Sub)
 - PostgreSQL for workflow persistence
 
-### Agents Service (`services/agents`)
-
-**Package**: `@delego/agents`
-**Port**: 3011
-**Health Check**: `GET /health`
-
-The agents service runs AI agents for various commerce tasks.
-
-#### Responsibilities
-
-- AI agent runtime execution
-- LLM provider abstraction
-- Tool registry and execution
-- Memory management
-- Agent context management
-- Prompt engineering
-- Response parsing and validation
-
-#### Agent Types
-
-- **Buyer Agent**: Product search, comparison, recommendation
-- **Payment Agent**: Spending policy enforcement, payment execution
-- **Merchant Agent** (Planned): Fulfillment assistance
-- **Delivery Agent** (Planned): Tracking and confirmation
-
-#### Tech Stack
-
-- Node.js with TypeScript
-- LLM APIs (OpenAI, Anthropic, etc.)
-- Vector database for memory (Planned)
-- Tool execution framework
-
-### Wallet Service (`services/wallet`)
+### Wallet Service (`apps/backend/wallet`)
 
 **Package**: `@delego/wallet`
 **Port**: 3012
@@ -172,7 +140,7 @@ The wallet service manages Stellar wallets and Soroban permissions.
 - Soroban RPC client
 - PostgreSQL for wallet data
 
-### Payments Service (`services/payments`)
+### Payments Service (`apps/backend/payments`)
 
 **Package**: `@delego/payments`
 **Port**: 3014
@@ -206,7 +174,7 @@ The payments service coordinates payment and escrow operations.
 - Stellar SDK
 - PostgreSQL for payment records
 
-### Notifications Service (`services/notifications`)
+### Notifications Service (`apps/backend/notifications`)
 
 **Package**: `@delego/notifications`
 **Port**: 3015
@@ -286,7 +254,7 @@ Notifications (independent, receives events)
 Each service follows a consistent structure:
 
 ```
-services/
+apps/backend/
 ├── gateway/
 │   ├── src/
 │   │   ├── routes/
@@ -524,7 +492,7 @@ psql $DATABASE_URL
 
 - [Gateway Service README](./gateway/README.md)
 - [Orchestrator Service README](./orchestrator/README.md)
-- [Agents Service README](./agents/README.md)
+- [Agents Service README](../../agents/README.md)
 - [Wallet Service README](./wallet/README.md)
 - [Payments Service README](./payments/README.md)
 - [Notifications Service README](./notifications/README.md)

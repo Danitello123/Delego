@@ -19,11 +19,11 @@ The apps directory follows a monorepo pattern where each application is a separa
 
 | App | Package | Port | Tech Stack | Description |
 |-----|---------|------|------------|-------------|
-| [web](./web) | `@delego/web` | 3001 | Next.js, React, TypeScript, Tailwind CSS | Customer web application for wallet connection, delegation management, and order tracking |
+| [frontend](./frontend) | `@delego/web` | 3001 | Next.js, React, TypeScript, Tailwind CSS | Customer web application for wallet connection, delegation management, and order tracking |
 
 ## Applications
 
-### Customer Web App (`apps/web`)
+### Customer Web App (`apps/frontend`)
 
 The customer web application is the primary interface for users to interact with Delego. It provides:
 
@@ -51,7 +51,7 @@ The customer web application is the primary interface for users to interact with
 #### Directory Structure
 
 ```
-apps/web/
+apps/frontend/
 ├── app/                    # Next.js app directory
 │   ├── (auth)/            # Auth-related pages
 │   ├── (dashboard)/       # Dashboard pages
@@ -80,8 +80,8 @@ apps/web/
 #### Development
 
 ```bash
-# Navigate to the web app directory
-cd apps/web
+# Navigate to the frontend app directory
+cd apps/frontend
 
 # Install dependencies
 pnpm install
@@ -171,7 +171,7 @@ Custom Hook
     ↓
 API Client (@delego/sdk)
     ↓
-API Gateway (services/gateway)
+API Gateway (apps/backend/gateway)
     ↓
 Backend Services
 ```
@@ -265,7 +265,7 @@ See [CONTRIBUTING.md](../CONTRIBUTING.md) for general contribution guidelines.
 
 ## Documentation
 
-- [Web App README](./web/README.md) - Detailed web app documentation
+- [Web App README](./frontend/README.md) - Detailed web app documentation
 - [Shared UI Components](../packages/ui/README.md) - UI component library
 - [API SDK](../packages/sdk/README.md) - API client documentation
 - [Shared Types](../packages/types/README.md) - Type definitions
