@@ -177,6 +177,10 @@ pub enum EscrowError {
     InvalidQuorum = 22,
     /// Quorum not yet reached
     QuorumNotReached = 23,
+    /// Quorum config not set
+    QuorumConfigNotSet = 24,
+    /// Conflicting quorum outcomes
+    ConflictingQuorum = 25,
 }
 
 #[contract]
@@ -246,14 +250,22 @@ impl EscrowContract {
         if threshold == 0 || threshold > arbiters.len() as u32 {
             return Err(EscrowError::InvalidQuorum);
         }
-        let quorum_config = QuorumConfig { arbiters, threshold };
+        // Check for duplicate arbiters
+        let mut unique_arbiters = soroban_sdk::Vec::new(&env);
+        for arbiter in arbiters.iter() {
+            if unique_arbiters.contains(&arbiter) {
+                return Err(EscrowError::InvalidQuorum);
+            }
+            unique_arbiters.push_back(arbiter);
+        }
+        let quorum_config = QuorumConfig { arbiters: unique_arbiters, threshold };
         env.storage().instance().set(&DataKey::QuorumConfig, &quorum_config);
         Ok(true)
     }
 
     /// Get the current quorum configuration.
-    pub fn get_quorum_config(env: Env) -> QuorumConfig {
-        env.storage().instance().get(&DataKey::QuorumConfig).unwrap()
+    pub fn get_quorum_config(env: Env) -> Result<QuorumConfig, EscrowError> {
+        env.storage().instance().get(&DataKey::QuorumConfig).ok_or(EscrowError::QuorumConfigNotSet)
     }
 
     /// Vote on a disputed escrow. Only authorized arbiters.
@@ -265,7 +277,7 @@ impl EscrowContract {
     ) -> Result<bool, EscrowError> {
         arbiter.require_auth();
 
-        let quorum_config: QuorumConfig = env.storage().instance().get(&DataKey::QuorumConfig).unwrap();
+        let quorum_config: QuorumConfig = env.storage().instance().get(&DataKey::QuorumConfig).ok_or(EscrowError::QuorumConfigNotSet)?;
         if !quorum_config.arbiters.contains(&arbiter) {
             return Err(EscrowError::NotAnArbiter);
         }
@@ -314,14 +326,22 @@ impl EscrowContract {
             return Err(EscrowError::NotDisputed);
         }
 
-        let quorum_config: QuorumConfig = env.storage().instance().get(&DataKey::QuorumConfig).unwrap();
+        let quorum_config: QuorumConfig = env.storage().instance().get(&DataKey::QuorumConfig).ok_or(EscrowError::QuorumConfigNotSet)?;
         let votes_key = DataKey::DisputeVotes(escrow_id);
         let votes: soroban_sdk::Vec<DisputeVote> = env.storage().persistent().get(&votes_key).unwrap_or_else(|| soroban_sdk::Vec::new(&env));
 
-        let seller_votes = votes.iter().filter(|v| v.release_to_seller).count() as u32;
-        let buyer_votes = votes.iter().filter(|v| !v.release_to_seller).count() as u32;
+        // Only count votes from current arbiters
+        let seller_votes = votes.iter()
+            .filter(|v| v.release_to_seller && quorum_config.arbiters.contains(&v.arbiter))
+            .count() as u32;
+        let buyer_votes = votes.iter()
+            .filter(|v| !v.release_to_seller && quorum_config.arbiters.contains(&v.arbiter))
+            .count() as u32;
 
-        let release_to_seller = if seller_votes >= quorum_config.threshold {
+        // Handle conflicting quorum outcomes explicitly
+        let release_to_seller = if seller_votes >= quorum_config.threshold && buyer_votes >= quorum_config.threshold {
+            return Err(EscrowError::ConflictingQuorum);
+        } else if seller_votes >= quorum_config.threshold {
             true
         } else if buyer_votes >= quorum_config.threshold {
             false
@@ -332,7 +352,9 @@ impl EscrowContract {
         let token_client = soroban_sdk::token::Client::new(&env, &record.token);
         if release_to_seller {
             let fee_config: FeeConfig = env.storage().instance().get(&DataKey::FeeConfig).unwrap();
-            let fee = (record.amount * fee_config.fee_bps as i128) / 10_000i128;
+            let fee_bps = fee_config.fee_bps as i128;
+            let fee = (record.amount / 10_000i128) * fee_bps
+                + ((record.amount % 10_000i128) * fee_bps) / 10_000i128;
             let seller_amount = record.amount - fee;
 
             if fee > 0 {
@@ -479,7 +501,9 @@ impl EscrowContract {
         }
 
         let fee_config: FeeConfig = env.storage().instance().get(&DataKey::FeeConfig).unwrap();
-        let fee = (record.amount * fee_config.fee_bps as i128) / 10_000i128;
+        let fee_bps = fee_config.fee_bps as i128;
+        let fee = (record.amount / 10_000i128) * fee_bps
+            + ((record.amount % 10_000i128) * fee_bps) / 10_000i128;
         let seller_amount = record.amount - fee;
 
         let token_client = soroban_sdk::token::Client::new(&env, &record.token);
@@ -608,7 +632,9 @@ impl EscrowContract {
         let token_client = soroban_sdk::token::Client::new(&env, &record.token);
         if release_to_seller {
             let fee_config: FeeConfig = env.storage().instance().get(&DataKey::FeeConfig).unwrap();
-            let fee = (record.amount * fee_config.fee_bps as i128) / 10_000i128;
+            let fee_bps = fee_config.fee_bps as i128;
+            let fee = (record.amount / 10_000i128) * fee_bps
+                + ((record.amount % 10_000i128) * fee_bps) / 10_000i128;
             let seller_amount = record.amount - fee;
 
             if fee > 0 {
