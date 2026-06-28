@@ -1,0 +1,8 @@
+CREATE TABLE purchase_workflows (
+  order_id VARCHAR(255) PRIMARY KEY,
+  user_id UUID NOT NULL,
+  state VARCHAR(100) NOT NULL,
+  context JSONB NOT NULL,
+  version INTEGER NOT NULL DEFAULT 1,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
